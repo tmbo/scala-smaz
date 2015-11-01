@@ -1,7 +1,7 @@
 # scala-smaz
 scala-smaz is a scala port of the Smaz short string compression algorithm by Salvatore Sanfilippo and released as a C library at: https://github.com/antirez/smaz
 
-The library supports and compresses ASCII characters. When used on short word sequences the compression is about 30% - 40%. UTF-8 characters wont get compressed and therefore your data should consist of mostly ASCII characters, but is allowed to contain an UTF-8 character here and there.
+The library supports both ASCII and UTF-8 characters. But only ASCII characters get compressed. When used on short word sequences the compression is about 30% - 40%. UTF-8 characters wont get compressed and therefore your data should consist of mostly ASCII characters.
 
 ### Dependency
 Add the following dependency to your build file:
