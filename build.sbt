@@ -1,6 +1,6 @@
 name := "scala-smaz"
 
-version := "0.9-SNAPSHOT"
+version := "1.0.2"
 
 scalaVersion := "2.11.2"
 
@@ -40,5 +40,7 @@ pomExtra := (
 )
 
 libraryDependencies ++= Seq(
-  "org.specs2" %% "specs2-core" % "3.6.5" % "test"
+  "org.specs2" %% "specs2-core" % "3.6.5" % "test",
+  "org.apache.logging.log4j" % "log4j-api" % "2.4.1",
+  "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 )

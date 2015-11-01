@@ -4,6 +4,27 @@ import java.io._
 import java.nio.CharBuffer
 import java.nio.charset.Charset
 import java.util
+import org.apache.logging.log4j.LogManager;
+
+object Smaz {
+  type CodeBook = Array[String]
+
+  /**
+   * The library uses some control bytes to signal different content that needs
+   * to be taken care of in different ways during decompression.
+   */
+  object ControlBytes{
+    val UTF8_AHEAD = 253
+    val SINGLE_CHAR_ASCII = 254
+    val MULTI_CHAR_ASCII = 255
+  }
+
+  val MAXIMAL_VERB_BUFFER_LENGTH = 256
+
+  val NUMBER_OF_CODES = 253
+
+  val CODE_HASH_MAP_SIZE = 241
+}
 
 /**
  * Smaz class for compression small strings. Port to scala from 
@@ -12,33 +33,18 @@ import java.util
  *
  * @author tmbo
  */
-object Smaz extends DefaultCodeBook{
-  type CodeBook = Array[String]
-
-  /**
-   * The library uses some control bytes to signal different content that needs 
-   * to be taken care of in different ways during decompression.
-   */
-  object ControlBytes{
-    val UTF8_AHEAD = 253
-    val SINGLE_CHARA_SCII = 254
-    val MULTI_CHAR_ASCII = 255
-  }
+trait Smaz {
+  import Smaz._
   
-  val MAXIMAL_VERB_BUFFER_LENGTH = 256
-  
-  val NUMBER_OF_CODES = 253
-  
-  val CODE_HASH_MAP_SIZE = 241
-
+  val logger = LogManager.getLogger()
 
   def compressWithStats(inString: String,
-               codeBook: CodeBook = CODEBOOK, accessLog: Array[Int]): Array[Byte] = {
+               codeBook: CodeBook, accessLog: Array[Int]): Array[Byte] = {
     compressImpl(inString, codeBook, accessLog = Some(accessLog))
   }
   
   def compress(inString: String,
-                codeBook: CodeBook = CODEBOOK): Array[Byte] = {
+                codeBook: CodeBook): Array[Byte] = {
     compressImpl(inString, codeBook, accessLog = None)
   }
   
@@ -48,7 +54,7 @@ object Smaz extends DefaultCodeBook{
    * @param inString string to compress
    * @return byte array compressed byte array
    */
-  private def compressImpl(inString: String, 
+  protected def compressImpl(inString: String,
     codeBook: CodeBook,
     accessLog: Option[Array[Int]]): Array[Byte] = {
 
@@ -185,7 +191,7 @@ object Smaz extends DefaultCodeBook{
    */
   private def outputVerb(outputStream: ByteArrayOutputStream, str: String) {
     if (str.length == 1) {
-      outputStream.write(ControlBytes.SINGLE_CHARA_SCII)
+      outputStream.write(ControlBytes.SINGLE_CHAR_ASCII)
       outputStream.write(str.toCharArray()(0))
     }
     else {
@@ -196,8 +202,7 @@ object Smaz extends DefaultCodeBook{
       }
       catch {
         case e: IOException => {
-          System.err.println("Error outputting verbatim data")
-          e.printStackTrace()
+          logger.error("Error outputting verbatim data", e)
         }
       }
     }
@@ -213,7 +218,7 @@ object Smaz extends DefaultCodeBook{
   def decompress(strBytes: Array[Byte], 
     offset: Int, 
     length: Int, 
-    reverseCodeBook: CodeBook = REVERSE_CODEBOOK): String = {
+    reverseCodeBook: CodeBook): String = {
 
     val out = new StringBuilder()
     var i = offset
@@ -225,7 +230,7 @@ object Smaz extends DefaultCodeBook{
           val utf8Length = strBytes(i)
           out.append(new String(strBytes, i + 1, utf8Length, "utf-8"))
           i += utf8Length
-        case ControlBytes.SINGLE_CHARA_SCII =>
+        case ControlBytes.SINGLE_CHAR_ASCII =>
           i += 1
           out.append(strBytes(i).toChar)
         case ControlBytes.MULTI_CHAR_ASCII =>
@@ -244,9 +249,5 @@ object Smaz extends DefaultCodeBook{
       i += 1
     }
     out.toString()
-  }
-
-  def decompress(strBytes: Array[Byte]): String = {
-    decompress(strBytes, 0, strBytes.length)
   }
 }

@@ -1,5 +1,7 @@
 package com.scalableminds.smaz
 
+object DefaultSmaz extends SmazWithCustomCodeBook with DefaultCodeBook
+
 trait DefaultCodeBook{
   // This is the default codebook. During compression the algorithm will try to 
   // find short character streams and replace them with a single byte. The coding 

@@ -2,9 +2,13 @@ package com.scalableminds.smaz
 
 import java.io._
 
+import org.apache.logging.log4j.LogManager
+
 import scala.collection.mutable
 
 object CodeBookCooker {
+  val logger = LogManager.getLogger()
+  
   val NUMBER_REPLACEMENTS_TO_EVALUATE = 10
   
   /**
@@ -65,14 +69,13 @@ object CodeBookCooker {
     val combinedAccessLog = new Array[Int](Smaz.NUMBER_OF_CODES)
     
     val size = testStrings.map(s =>
-      Smaz.compressWithStats(s, codeBook, combinedAccessLog).length).sum
+      DefaultSmaz.compressWithStats(s, codeBook, combinedAccessLog).length).sum
     
-    println(s"compressed everything. size $size")
-    println("cloned performance")
+    logger.debug(s"Compressed everything. Size $size byte")
     val leastImportant = reverseCodeBook.zipWithIndex.sortBy {
       case (decoded, idx) =>
         val updatedRCB = reverseCodeBook.updated(idx, "")
-        val encodedWord = Smaz.compress(decoded, codeBookFromReverse(updatedRCB))
+        val encodedWord = DefaultSmaz.compress(decoded, codeBookFromReverse(updatedRCB))
         val estimatedSizeBenefit = combinedAccessLog(idx) * (encodedWord.length - 1)
         estimatedSizeBenefit
     }.head
@@ -135,7 +138,7 @@ object CodeBookCooker {
 
     best.par.map { str =>
       val updatedRCB = reverseCodeBook.updated(x._2, str)
-      val encodedWord = testStrings.map(s => Smaz.compress(s, codeBookFromReverse(updatedRCB)).length).sum
+      val encodedWord = testStrings.map(s => DefaultSmaz.compress(s, codeBookFromReverse(updatedRCB)).length).sum
       str -> encodedWord
     }.seq.sortBy(_._2).head
   }
@@ -157,21 +160,22 @@ object CodeBookCooker {
    */
   def tuneOn(testStrings: Array[String], maxIterations: Int = Int.MaxValue) = {
     val ngramCounts = calculateNGramCounts(testStrings)
-    println("Finished calculating ngrams")
+    logger.info(s"Finished calculating ngrams. Number of ngrams: ${ngramCounts.size}")
     def tuneCodeBook(testStrings: Array[String], reverseCookbook: Array[String], i: Int): Array[String] = {
-      println(s"Tune started")
+      logger.info(s"Optimization in iteration $i")
       val x = findLeastValuable(testStrings, reverseCookbook)
-      println(s"Found least valuable: '${x._1}'")
+      logger.debug(s"Found least valuable: '${x._1}'")
       val r = findBestReplacementFor(x._1, testStrings, reverseCookbook, ngramCounts)
-      println(s"Iteration $i ($x <-> $r). Diff: ${x._2 - r._2}")
 
       if (x._1._1 == r._1 || i >= maxIterations) {
+        logger.info("Finished tuning.")
         reverseCookbook
       } else {
+        logger.info(s"Exchanging ($x <-> $r). Diff: ${x._2 - r._2}")
         val updated = reverseCookbook.updated(x._1._2, r._1)
         tuneCodeBook(testStrings, updated, i + 1)
       }
     }
-    tuneCodeBook(testStrings, Smaz.REVERSE_CODEBOOK, 0)
+    tuneCodeBook(testStrings, DefaultSmaz.REVERSE_CODEBOOK, 0)
   }
 }
