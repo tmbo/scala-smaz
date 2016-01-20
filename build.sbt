@@ -42,5 +42,6 @@ pomExtra := (
 libraryDependencies ++= Seq(
   "org.specs2" %% "specs2-core" % "3.6.5" % "test",
   "org.apache.logging.log4j" % "log4j-api" % "2.4.1",
+  "org.apache.commons" % "commons-lang3" % "3.4",
   "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 )

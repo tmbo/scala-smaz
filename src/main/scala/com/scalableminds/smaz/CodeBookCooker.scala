@@ -2,6 +2,7 @@ package com.scalableminds.smaz
 
 import java.io._
 
+import org.apache.commons.lang3.StringEscapeUtils
 import org.apache.logging.log4j.LogManager
 
 import scala.collection.mutable
@@ -50,7 +51,7 @@ object CodeBookCooker {
       case (decoded, _) if decoded.length == 0 => // Skip
       case (decoded, code) =>
         val hash = codeBookHashFor(decoded)
-        codeBook(hash) = codeBook(hash) + "\\%03o%s\\%03o".format(decoded.length, decoded, code)
+        codeBook(hash) = codeBook(hash) + "\\%03o%s\\%03o".format(decoded.length, StringEscapeUtils.escapeJava(decoded), code)
     }
     codeBook.map(s => "\"" + s + "\"").mkString("Array(",", ", ")")
   }
@@ -68,17 +69,17 @@ object CodeBookCooker {
     
     val combinedAccessLog = new Array[Int](Smaz.NUMBER_OF_CODES)
     
-    val size = testStrings.map(s =>
+    val size = testStrings.par.map(s =>
       DefaultSmaz.compressWithStats(s, codeBook, combinedAccessLog).length).sum
     
     logger.debug(s"Compressed everything. Size $size byte")
-    val leastImportant = reverseCodeBook.zipWithIndex.sortBy {
+    val (leastImportant, _) = reverseCodeBook.zipWithIndex.par.map{
       case (decoded, idx) =>
         val updatedRCB = reverseCodeBook.updated(idx, "")
         val encodedWord = DefaultSmaz.compress(decoded, codeBookFromReverse(updatedRCB))
         val estimatedSizeBenefit = combinedAccessLog(idx) * (encodedWord.length - 1)
-        estimatedSizeBenefit
-    }.head
+        (decoded, idx) -> estimatedSizeBenefit
+    }.seq.sortBy(_._2).head
     (leastImportant, size)
   }
 
@@ -144,11 +145,21 @@ object CodeBookCooker {
   }
 
   /**
-   * Experts a revert code book to a file
+   * Exports a revert code book to a file
    */
-  def writeReverseCodeBook(reverseCodebBook: Array[String], output: File) = {
+  def writeReverseCodeBook(reverseCodeBook: Array[String], output: File) = {
     val writer = new PrintWriter(output)
-    reverseCodebBook.foreach(s => writer.write(s + "\n"))
+    writer.write(reverseCodeBook.map(s => "\"" + StringEscapeUtils.escapeJava(s) + "\"").mkString("Array(",", ", ")"))
+    writer.close()
+  }
+
+  /**
+   * Exports a code book to a file
+   */
+  def writeCodeBook(reverseCodeBook: Array[String], output: File) = {
+    val codebook = prettyPrintCodeBookFromReverse(reverseCodeBook)
+    val writer = new PrintWriter(output)
+    writer.write(codebook)
     writer.close()
   }
 
