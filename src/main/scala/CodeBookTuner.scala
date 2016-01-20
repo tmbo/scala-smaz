@@ -16,7 +16,8 @@ object CodeBookTuner {
     val inputFile = args(1)
     val codOut = args(2)
     val revOut = args(3)
-    val testStrings = Source.fromFile(new File(inputFile)).getLines().toArray
+    val testStrings = Source.fromFile(new File(inputFile)).getLines().grouped(10).map(_.head).toArray
+    println("Done loading test strings. Elements: " + testStrings.length)
     val reverseCodeBook = CodeBookCooker.tuneOn(testStrings, numIterations.toInt)
 
     CodeBookCooker.writeReverseCodeBook(reverseCodeBook, new File(revOut))
