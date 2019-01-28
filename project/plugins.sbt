@@ -1,7 +1,5 @@
 // Comment to get more information during initialization
 logLevel := Level.Warn
 
-// The Typesafe repository
-resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
-
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "0.5.0")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.4")
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
