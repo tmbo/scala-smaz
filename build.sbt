@@ -1,8 +1,10 @@
 name := "scala-smaz"
 
-version := "1.0.2"
+version := "1.0.3-SNAPSHOT"
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.12.8"
+
+crossScalaVersions ++= List("2.12.8", "2.11.12")
 
 publishMavenStyle := true
 
@@ -38,7 +40,7 @@ pomExtra := <developers>
 </developers>
 
 libraryDependencies ++= List(
-  "org.specs2" %% "specs2-core" % "3.6.5" % Test,
-  "org.apache.logging.log4j" % "log4j-api" % "2.4.1",
-  "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
-)
+  "org.specs2" %% "specs2-core" % "4.4.1" % Test,
+  "org.apache.logging.log4j" % "log4j-api" % "2.11.1",
+  "org.apache.logging.log4j" % "log4j-core" % "2.11.1"
+  )
